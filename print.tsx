@@ -1,92 +1,132 @@
 "use client";
-
 import { useState } from "react";
 
-export default function ReceiptPage() {
-  const [receipt, setReceipt] = useState<any>(null);
+export default function Page() {
+  const [printType, setPrintType] = useState<"customer" | "cook" | null>(null);
 
-  // Fake order data
-  const fakeOrder = {
-    orderId: "12345",
-    items: [
-      { qty: 2, name: "Veg Burger", price: 120 },
-      { qty: 1, name: "French Fries", price: 80 },
-      { qty: 3, name: "Coke", price: 50 },
-    ],
-    total: 470,
+  const handlePrint = (type: "customer" | "cook") => {
+    setPrintType(type);
+    setTimeout(() => {
+      window.print();
+      setPrintType(null); // reset after print
+    }, 100);
   };
 
-  function handlePrint(type: "cook" | "customer") {
-    setReceipt({ ...fakeOrder, type });
-    setTimeout(() => window.print(), 200); // wait for render then print
-  }
+  // Fake data
+  const items = [
+    { name: "Apple", qty: 2, price: 100 },
+    { name: "Orange", qty: 10, price: 50 },
+    { name: "Strawberry", qty: 10, price: 150 },
+  ];
+  const total = items.reduce((sum, i) => sum + i.qty * i.price, 0);
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Receipt Printing Demo</h1>
-
-      <div className="space-x-4">
-        <button
-          onClick={() => handlePrint("cook")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          Print Cook Receipt
-        </button>
+      {/* Buttons (hidden in print) */}
+      <div className="mb-6 flex gap-4 no-print">
         <button
           onClick={() => handlePrint("customer")}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Print Customer Bill
         </button>
+        <button
+          onClick={() => handlePrint("cook")}
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          Print Cook Receipt
+        </button>
       </div>
 
-      {/* Hidden Print Layout */}
-      {receipt && (
-        <div id="print-area" className="print-layout">
-          <h2 className="text-center font-bold text-lg mb-2">
-            {receipt.type === "cook" ? "KITCHEN ORDER" : "CUSTOMER BILL"}
-          </h2>
-          <p className="text-center mb-2">Order #{receipt.orderId}</p>
-          <hr className="border-dashed border-gray-400 my-2" />
-
-          {receipt.items.map((item: any, i: number) => (
-            <div key={i} className="flex justify-between text-sm">
-              <span>
-                {item.qty} × {item.name}
-              </span>
-              {receipt.type === "customer" && (
-                <span>₹{item.qty * item.price}</span>
-              )}
+      {/* Printable area */}
+      <div className="print-area">
+        {printType === "customer" && (
+          <div className="text-center text-sm w-[80mm] mx-auto">
+            <h2 className="font-bold text-lg">SAMPLE BILL</h2>
+            <p>4th Cross Street, City - Pincode</p>
+            <div className="flex justify-between my-2 text-xs">
+              <span>Receipt No: <b>10002</b></span>
+              <span>Date: {new Date().toLocaleDateString()}</span>
             </div>
-          ))}
+            <hr className="border-dashed border-t border-black" />
+            <table className="w-full text-left text-xs mt-2">
+              <thead>
+                <tr className="border-b border-black">
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((i, idx) => (
+                  <tr key={idx}>
+                    <td>{i.name}</td>
+                    <td>{i.qty}</td>
+                    <td>{i.price.toFixed(2)}</td>
+                    <td>{(i.qty * i.price).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <hr className="border-t border-black mt-2" />
+            <div className="flex justify-between font-bold text-sm">
+              <span>Total</span>
+              <span>{total.toFixed(2)}</span>
+            </div>
+            <hr className="border-t border-black mb-2" />
+            <p className="font-bold">!!! THANK YOU !!!</p>
+          </div>
+        )}
 
-          <hr className="border-dashed border-gray-400 my-2" />
+        {printType === "cook" && (
+          <div className="text-sm w-[80mm] mx-auto">
+            <h2 className="text-center font-bold">COOK ORDER</h2>
+            <hr className="border-dashed border-t border-black my-2" />
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-black">
+                  <th>Item</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((i, idx) => (
+                  <tr key={idx}>
+                    <td>{i.name}</td>
+                    <td>{i.qty}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <hr className="border-t border-black my-2" />
+            <p className="text-center text-xs">Prepared by Kitchen</p>
+          </div>
+        )}
+      </div>
 
-          {receipt.type === "customer" && (
-            <p className="text-right font-bold">Total: ₹{receipt.total}</p>
-          )}
-          <p className="text-center mt-4 text-xs">Thank you! Visit again 🙏</p>
-        </div>
-      )}
-
-      {/* CSS for Print */}
+      {/* Print styles */}
       <style jsx global>{`
         @media print {
           body * {
-            visibility: hidden;
+            visibility: hidden !important;
           }
-          #print-area,
-          #print-area * {
-            visibility: visible;
+          .print-area,
+          .print-area * {
+            visibility: visible !important;
           }
-          #print-area {
+          .print-area {
             position: absolute;
             left: 0;
             top: 0;
-            width: 80mm; /* Thermal roll width */
-            font-family: monospace;
-            font-size: 14px;
-            padding: 4px;
+            width: 80mm;
+          }
+          .no-print {
+            display: none !important;
+          }
+          @page {
+            size: 80mm auto;
+            margin: 5mm;
           }
         }
       `}</style>
